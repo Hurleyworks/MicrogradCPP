@@ -15,13 +15,13 @@ ValuePtr meanSquardError(const std::vector<ValuePtr>& target, const std::vector<
 }
 
 // The stochastic gradient descent update rule
-void gradientDescent(std::vector<ValuePtr> params, double lr)
+void gradientDescent(const std::vector<ValuePtr>& params, double learningRate)
 {
 	for (auto& p : params)
 	{
-		double grad = p->get_grad();
+		double gradient = p->get_grad();
 
-		p->set_val(p->get_val() + (-lr * grad));
+		p->set_val(p->get_val() -learningRate * gradient);
 	}
 }
 class Application : public Jahley::App
