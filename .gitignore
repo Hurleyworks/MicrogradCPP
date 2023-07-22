@@ -3,3 +3,5 @@
 ################################################################################
 
 /thirdparty/builds
+/builds
+/unittest/builds/VisualStudio2022
