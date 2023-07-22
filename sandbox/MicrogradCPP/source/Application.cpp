@@ -41,6 +41,8 @@ public:
 				{ExprNode::Create(0.5), ExprNode::Create(1.0), ExprNode::Create(1.0)},
 				{ExprNode::Create(1.0), ExprNode::Create(-1.0), ExprNode::Create(-1.0)} };
 
+
+			// This fails if a target is negative. I don't know why yet
 			std::vector<std::vector<ValuePtr>> targets = {
 				{ExprNode::Create(1.0)},
 				{ExprNode::Create(2.0)},
@@ -50,6 +52,7 @@ public:
 
 			// Train 
 			int epochs = 300;
+			double learningRate = 0.01;
 			for (int epoch = 0; epoch < epochs; ++epoch)
 			{
 				LOG(DBUG) << "---------------------Epoch: " << epoch;
@@ -69,14 +72,13 @@ public:
 					// Calculate loss
 					ValuePtr loss = meanSquardError(targets[i], prediction);
 
-					// Zero gradients
+					// Reset gradients to 0
 					mlp.zero_grad();
 
 					// Backward propagation
 					loss->backward();
 
 					// Update weights
-					double learningRate = 0.01;
 					gradientDescent(mlp.parameters(), learningRate);
 
 					LOG(DBUG) << "Loss: " << loss->get_val();
