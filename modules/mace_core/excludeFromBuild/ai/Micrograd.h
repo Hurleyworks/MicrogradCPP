@@ -229,10 +229,10 @@ public:
 class Neuron : public Module, public HasId
 {
 private:
-	std::vector<ValuePtr> w; // The 'w' member holds the weights of the neuron's inputs.
+	std::vector<ValuePtr> weights; // The 'weights' member holds the weights of the neuron's inputs.
 	// Each element in this vector corresponds to the weight of a particular input.
 
-	ValuePtr b; // The 'b' member represents the bias of the neuron.
+	ValuePtr bias; // The 'bias' member represents the bias of the neuron.
 	// This is an additional parameter added to the weighted sum of the neuron's inputs,
 	// which shifts the output of the neuron's activation function.
 
@@ -240,19 +240,21 @@ private:
 	// (in this case, ReLU) should be applied to the output of the neuron.
 
 public:
-	// The constructor takes the number of inputs ('nin') and a boolean indicating whether non-linearity should be applied.
+	// The constructor takes the number of inputs ('inputCount') and a boolean indicating whether non-linearity should be applied.
 	// The weights of the neuron are initialized with random values in the range [-1.0, 1.0],
 	// and the bias is initialized to 0.
-	Neuron(int nin, bool nonlin = true) :
+	Neuron(int inputCount, bool nonlin = true) :
 		nonlin(nonlin)
 	{
-		for (int i = 0; i < nin; ++i)
+		weights.reserve(inputCount);
+
+		for (int i = 0; i < inputCount; ++i)
 		{
 			double weight = RandoM::get<double>(-1.0, 1.0);
-			this->w.push_back(ExprNode::Create(weight));
+			weights.push_back(ExprNode::Create(weight));
 		}
 
-		this->b = ExprNode::Create(0);
+		bias = ExprNode::Create(0);
 	}
 
 	// The function call operator is overloaded to compute the output of the neuron given its inputs.
@@ -260,20 +262,20 @@ public:
 	// and then applies the ReLU activation function if 'nonlin' is true.
 	ValuePtr operator() (const std::vector<ValuePtr>& x)
 	{
-		ValuePtr act = b;
-		for (int i = 0; i < w.size(); ++i)
+		ValuePtr activation = bias;
+		for (int i = 0; i < weights.size(); ++i)
 		{
-			ValuePtr t = *w[i] * x[i];
-			act = *act + t;
+			ValuePtr t = *weights[i] * x[i];
+			activation = *activation + t;
 		}
-		return nonlin ? act->relu() : act;
+		return nonlin ? activation->relu() : activation;
 	}
 
 	// The 'parameters' member function returns a vector containing all the parameters (weights and bias) of the neuron.
 	std::vector<ValuePtr> parameters() override
 	{
-		std::vector<ValuePtr> params = w;
-		params.push_back(b);
+		std::vector<ValuePtr> params = weights;
+		params.push_back(bias);
 		return params;
 	}
 };
@@ -286,13 +288,13 @@ private:
 	// Each neuron is an instance of the Neuron class.
 
 public:
-	// The constructor takes the number of input and output neurons ('nin' and 'nout', respectively).
-	// It initializes the layer by creating 'nout' neurons, each with 'nin' inputs.
-	Layer(int nin, int nout)
+	// The constructor takes the number of input and output neurons ('neuronsIn' and 'neuronsOut', respectively).
+	// It initializes the layer by creating 'neuronsOut' neurons, each with 'neuronsIn' inputs.
+	Layer(int neuronsIn, int neuronsOut)
 	{
-		for (int i = 0; i < nout; ++i)
+		for (int i = 0; i < neuronsOut; ++i)
 		{
-			this->neurons.push_back(Neuron(nin));
+			this->neurons.push_back(Neuron(neuronsIn));
 		}
 	}
 
@@ -330,26 +332,24 @@ private:
 	std::vector<Layer> layers; // The 'layers' member holds the sequence of layers that make up the network.
 
 public:
-	// The constructor takes the number of input neurons ('nin') and a vector that specifies the number of neurons
-	// in each layer ('nouts'). It initializes the network by creating a sequence of layers,
+	// The constructor takes the number of input neurons ('inputNeuronCount') and a vector that specifies the number of neurons
+	// in each layer ('neuronsPerLayer'). It initializes the network by creating a sequence of layers,
 	// each with the appropriate number of input and output neurons.
-	MLP(int nin, std::vector<int> nouts)
+	MLP(int inputNeuronCount, std::vector<int> neuronsPerLayer)
 	{
-		int sz_in = nin;
-		for (int i = 0; i < nouts.size(); ++i)
+		int sz_in = inputNeuronCount;
+		for (int i = 0; i < neuronsPerLayer.size(); ++i)
 		{
-			// bool is_last_layer = (i == nouts.size() - 1);
-			this->layers.push_back(Layer(sz_in, nouts[i]));
-			sz_in = nouts[i];
+			this->layers.push_back(Layer(sz_in, neuronsPerLayer[i]));
+			sz_in = neuronsPerLayer[i];
 		}
 	}
 
 	// The function call operator is overloaded to compute the output of the network given its inputs.
 	// It applies each layer in the network to the output of the previous layer, and returns the final output.
-	std::vector<ValuePtr> operator() (const std::vector<ValuePtr>& x)
+	std::vector<ValuePtr> operator() (const std::vector<ValuePtr>& inputs)
 	{
-		std::vector<ValuePtr> out = x;
-		int n = 0;
+		std::vector<ValuePtr> out = inputs;
 		for (auto& layer : layers)
 		{
 			out = layer(out);
