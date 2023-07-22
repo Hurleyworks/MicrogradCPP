@@ -14,5 +14,5 @@ Goto newly created "builds/VisualStudio2022" folder abd open and build the Neura
 Run the MicrogradCPP sandbox app.
 
 # Unit tests
-Goto unitest folder and run the "genderateVS2022.bat" file
+Goto unitest folder and run the "generateVS2022.bat" file
 Goto newly created "builds/VisualStudio2022" folder abd open and build the UnitTest.sln
