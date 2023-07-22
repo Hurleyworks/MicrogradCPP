@@ -1,6 +1,6 @@
 # MicrogradCPP
 attempt at a c++ version of Andrej  Karpathy's  micrograd
-
+https://github.com/karpathy/micrograd
 # Requires
 Visual Studio 2022
 
