@@ -10,9 +10,9 @@ Goto newly created "builds/VisualStudio2022" folder and open and build the Third
 
 # Build and run MicrogradCPP app
 Go back to root directory and run the "generateVS2022.bat" file
-Goto newly created "builds/VisualStudio2022" folder abd open and build the NeuralNets.sln
+Goto newly created "builds/VisualStudio2022" folder and open and build the NeuralNets.sln
 Run the MicrogradCPP sandbox app.
 
 # Unit tests
 Goto unittest folder and run the "generateVS2022.bat" file
-Goto newly created "builds/VisualStudio2022" folder abd open and build the UnitTest.sln
+Goto newly created "builds/VisualStudio2022" folder and open and build the UnitTest.sln
