@@ -53,8 +53,7 @@ public:
 			for (int epoch = 0; epoch < epochs; ++epoch)
 			{
 				LOG(DBUG) << "---------------------Epoch: " << epoch;
-				// for (size_t i = 0; i < inputs.size(); ++i)
-				for (size_t i = 0; i < 4; ++i)
+				for (size_t i = 0; i < inputs.size(); ++i)
 				{
 					std::vector<ValuePtr> in = inputs[i];
 					LOG(DBUG) << "Input " << i << " " << in[0]->get_val() << ", " << in[1]->get_val() << ", " << in[2]->get_val();
@@ -77,7 +76,8 @@ public:
 					loss->backward();
 
 					// Update weights
-					gradientDescent(mlp.parameters(), 0.01);
+					double learningRate = 0.01;
+					gradientDescent(mlp.parameters(), learningRate);
 
 					LOG(DBUG) << "Loss: " << loss->get_val();
 					LOG(DBUG) << " ";
