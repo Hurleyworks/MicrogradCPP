@@ -1,47 +1,7 @@
-/*
-This ExprNode class appears to be part of a system to create and manipulate a directed acyclic graph (DAG) of
-operations and values, such as might be used in an automatic differentiation or neural network context.
-It provides a framework for manipulating values, performing basic mathematical operations,
-and propagating gradients for backpropagation in neural networks.
+#pragma once
 
-Here's a brief rundown of the key components of the class:
-
-ValuePtr: This is a type alias for a shared pointer to a ExprNode.
-Shared pointers are a part of C++'s memory management system,
-allowing multiple pointers to refer to the same object and
-automatically deleting the object when no more references to it exist.
-
-Create: This is a factory method for creating new ExprNode instances.
-It also allows setting the operation that produced this value and the
-list of values that this value depends on (its "children").
-
-ExprNode (double data): This is a constructor for ExprNode that initializes
-the data value with the provided parameter and the gradient with 0.0.
-
-operator+, operator-, operator*, operator/, pow, operator-: These are
-overloaded operators to perform addition, subtraction, multiplication,
-division, power, and negation operations. The overloads allow these
-operations to be performed with other ValueGraphs or with doubles.
-They create new ValueGraphs that hold the result of the operation,
-and set up a backward function to compute the gradient during backpropagation.
-
-backward(): This method performs a backward propagation, or backpropagation,
-which is used in training neural networks. It involves a topological sort to
-determine the order of operations, then executes each node's _backward function
-in reverse order to propagate the gradients.
-
-relu(): This method applies the ReLU (Rectified Linear Unit) activation function.
-This function returns a new ExprNode where the data is the result of the ReLU function,
-and sets up the backward function to propagate gradients through the ReLU function.
-
-get_val() and get_grad(): These are getter methods to return the data value and gradient of a ExprNode.
-
-Overall, each ExprNode node represents a computation (like addition, multiplication, etc.)
-that takes input from previous nodes, holds a data value, and can propagate gradients back
-to previous nodes during backpropagation. This is a form of automatic differentiation
-that's particularly suited to deep learning applications.
-*/
-
+// attempt at c++ version of micrograd
+// https://github.com/karpathy/micrograd
 
 // This class was created with some help from ChatGPT4
 using ValuePtr = std::shared_ptr<class ExprNode>;
@@ -210,7 +170,6 @@ public:
 		{
 			this->grad += (out->data > 0) * out->grad;
 		};
-		// LOG (DBUG) << "After RelU " << out->get_val();
 		return out;
 	}
 
@@ -290,13 +249,10 @@ public:
 		for (int i = 0; i < nin; ++i)
 		{
 			double weight = RandoM::get<double>(-1.0, 1.0);
-			assert(weight != 0.0f);
-			// LOG (DBUG) <<  weight;
 			this->w.push_back(ExprNode::Create(weight));
 		}
 
 		this->b = ExprNode::Create(0);
-
 	}
 
 	// The function call operator is overloaded to compute the output of the neuron given its inputs.

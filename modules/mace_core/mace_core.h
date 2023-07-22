@@ -31,18 +31,7 @@
 #include <semaphore>
 #include <concepts>
 
-// NO MORE TRACING  Yay
-#define TRACE(x)
-
 using ItemID = int64_t;
-
-#ifdef __clang__
-#include <experimental/coroutine>
-#define COROUTINE_NAMESPACE std::experimental
-#else
-#include <coroutine>
-#define COROUTINE_NAMESPACE std
-#endif
 
 // g3log
 #include <g3log/g3log.hpp>
