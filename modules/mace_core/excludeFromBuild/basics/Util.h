@@ -156,3 +156,10 @@ static std::vector<char> readBinaryFile (const std::filesystem::path& filepath)
 }
 
 
+inline double generateRandomDouble(double lower_bound, double upper_bound) {
+    std::random_device rd;  // Obtain a random number from hardware
+    std::mt19937 gen(rd()); // Seed the generator
+    std::uniform_real_distribution<> distr(lower_bound, upper_bound); // Define the range
+
+    return distr(gen); // Generate numbers
+}

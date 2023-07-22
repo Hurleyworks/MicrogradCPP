@@ -68,6 +68,11 @@ public:
 					{
 						LOG(DBUG) << "Prediction " << p->get_val();
 					}
+					std::vector<ValuePtr>& targ = targets[i];
+					for (const auto& t : targ)
+					{
+						LOG(DBUG) << "Target " << t->get_val();
+					}
 
 					// Calculate loss
 					ValuePtr loss = meanSquardError(targets[i], prediction);

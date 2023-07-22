@@ -165,11 +165,15 @@ public:
 	// ReLU activation function
 	ValuePtr relu()
 	{
-		auto out = Create(this->data < 0 ? 0.0 : this->data, { shared_from_this() }, "ReLU");
+		auto out = Create(this->data < 0.0 ? 0.0 : this->data, { shared_from_this() }, "ReLU");
+		//double th =  std::tanh(this->data);
+		//auto out = Create(th, { shared_from_this() }, "ReLU");
 		out->_backward = [this, out]()
 		{
 			this->grad += (out->data > 0) * out->grad;
+			//this->grad += out->grad;
 		};
+	  // LOG(DBUG) << "RELU: " << out->get_val();
 		return out;
 	}
 
