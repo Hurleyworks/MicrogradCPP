@@ -19,6 +19,7 @@ void gradientDescent(const std::vector<ValuePtr>& params, double learningRate)
 {
 	for (auto& p : params)
 	{
+		//LOG(DBUG) << p->get_val();
 		double gradient = p->get_grad();
 
 		p->set_val(p->get_val() -learningRate * gradient);
@@ -51,7 +52,7 @@ public:
 
 
 			// Train 
-			int epochs = 300;
+			int epochs = 100;
 			double learningRate = 0.01;
 			for (int epoch = 0; epoch < epochs; ++epoch)
 			{

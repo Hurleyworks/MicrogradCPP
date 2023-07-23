@@ -163,3 +163,18 @@ inline double generateRandomDouble(double lower_bound, double upper_bound) {
 
     return distr(gen); // Generate numbers
 }
+
+inline double randomUniform(double min, double max) {
+    std::random_device rd;
+    std::default_random_engine generator(rd());
+    std::uniform_real_distribution<double> distribution(min, max);
+
+    return distribution(generator);
+}
+
+inline double generateRandomDouble() {
+    static std::mt19937 generator(12345); // A Mersenne Twister pseudo-random generator with a seed of 12345
+    std::uniform_real_distribution<> distr(-1.0, 1.0); // Define the distribution between -1.0 and 1.0
+
+    return distr(generator);
+}

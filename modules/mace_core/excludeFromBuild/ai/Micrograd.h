@@ -30,6 +30,11 @@ public:
 	ExprNode(double data) :
 		data(data), grad(0.0) {}
 
+	~ExprNode()
+	{
+		LOG(DBUG) << "NODE is destroyed ";
+	}
+
 	// Operator overload for addition with another ValuePtr
 	ValuePtr operator+ (ValuePtr other)
 	{
@@ -166,14 +171,13 @@ public:
 	ValuePtr relu()
 	{
 		auto out = Create(this->data < 0.0 ? 0.0 : this->data, { shared_from_this() }, "ReLU");
-		//double th =  std::tanh(this->data);
-		//auto out = Create(th, { shared_from_this() }, "ReLU");
+
 		out->_backward = [this, out]()
 		{
-			this->grad += (out->data > 0) * out->grad;
-			//this->grad += out->grad;
+			double t = out->data > 0.0 ? 1.0 : 0.0;
+			this->grad = this->grad + out->get_grad() * t;
 		};
-	  // LOG(DBUG) << "RELU: " << out->get_val();
+
 		return out;
 	}
 
@@ -254,23 +258,29 @@ public:
 
 		for (int i = 0; i < inputCount; ++i)
 		{
-			double weight = RandoM::get<double>(-1.0, 1.0);
+			// using generateRandomDouble fixes the intermittent failure problems
+			// because it produces the same random number set on every run
+			double weight = generateRandomDouble();
 			weights.push_back(ExprNode::Create(weight));
 		}
 
-		bias = ExprNode::Create(0);
+		bias = ExprNode::Create(0.001);
 	}
 
 	// The function call operator is overloaded to compute the output of the neuron given its inputs.
 	// It computes the weighted sum of the inputs and bias,
 	// and then applies the ReLU activation function if 'nonlin' is true.
-	ValuePtr operator() (const std::vector<ValuePtr>& x)
+	ValuePtr operator() (const std::vector<ValuePtr>& inputs)
 	{
+		assert(inputs.size() == weights.size());
+
 		ValuePtr activation = bias;
 		for (int i = 0; i < weights.size(); ++i)
 		{
-			ValuePtr t = *weights[i] * x[i];
+			ValuePtr t = *weights[i] * inputs[i];
+
 			activation = *activation + t;
+
 		}
 		return nonlin ? activation->relu() : activation;
 	}
@@ -288,28 +298,32 @@ public:
 class Layer : public Module
 {
 private:
+	uint32_t id = 0;
 	std::vector<Neuron> neurons; // The 'neurons' member holds the set of neurons that make up the layer.
 	// Each neuron is an instance of the Neuron class.
 
 public:
 	// The constructor takes the number of input and output neurons ('neuronsIn' and 'neuronsOut', respectively).
 	// It initializes the layer by creating 'neuronsOut' neurons, each with 'neuronsIn' inputs.
-	Layer(int neuronsIn, int neuronsOut)
+	Layer(int neuronsIn, int neuronsOut, uint32_t id)
 	{
+		this->id = id;
 		for (int i = 0; i < neuronsOut; ++i)
 		{
-			this->neurons.push_back(Neuron(neuronsIn));
+			neurons.push_back(Neuron(neuronsIn));
 		}
 	}
 
 	// The function call operator is overloaded to compute the output of the layer given its inputs.
 	// It applies each neuron in the layer to the input, and collects the results into a vector.
-	std::vector<ValuePtr> operator() (const std::vector<ValuePtr>& x)
+	std::vector<ValuePtr> operator() (const std::vector<ValuePtr>& inputs)
 	{
 		std::vector<ValuePtr> out;
+		out.reserve(neurons.size());
+
 		for (auto& n : neurons)
 		{
-			out.push_back(n(x));
+			out.push_back(n(inputs));
 		}
 		return out;
 	}
@@ -344,7 +358,7 @@ public:
 		int sz_in = inputNeuronCount;
 		for (int i = 0; i < neuronsPerLayer.size(); ++i)
 		{
-			this->layers.push_back(Layer(sz_in, neuronsPerLayer[i]));
+			layers.push_back(Layer(sz_in, neuronsPerLayer[i], layers.size()));
 			sz_in = neuronsPerLayer[i];
 		}
 	}
