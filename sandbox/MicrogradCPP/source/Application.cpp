@@ -42,17 +42,19 @@ public:
 				{ExprNode::Create(0.5), ExprNode::Create(1.0), ExprNode::Create(1.0)},
 				{ExprNode::Create(1.0), ExprNode::Create(-1.0), ExprNode::Create(-1.0)} };
 
-
-			// This fails if a target is negative. I don't know why yet
+			// The tanh function outputs values in the range -1 to 1. 
+			// If you're using tanh as the activation function in the output
+			// layer of your MLP and you have targets outside this range, 
+			// then it's not possible for the MLP to correctly predict those targets.
 			std::vector<std::vector<ValuePtr>> targets = {
+				{ExprNode::Create(-1.0)},
 				{ExprNode::Create(1.0)},
-				{ExprNode::Create(2.0)},
-				{ExprNode::Create(3.0)},
-				{ExprNode::Create(4.0)} };
+				{ExprNode::Create(1.0)},
+				{ExprNode::Create(-1)} };
 
 
 			// Train 
-			int epochs = 100;
+			int epochs = 1000;
 			double learningRate = 0.01;
 			for (int epoch = 0; epoch < epochs; ++epoch)
 			{

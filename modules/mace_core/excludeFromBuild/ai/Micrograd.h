@@ -167,15 +167,20 @@ public:
 		}
 	}
 
-	// ReLU activation function
-	ValuePtr relu()
+	
+	// From ChatGPT
+	// In the backward function, we're using the derivative of tanh(x), which is 1 - tanh²(x).
+	// When backpropagating the gradient, this derivative is multiplied with the gradient of 
+	// the output node. This is a fundamental step in gradient-based optimization algorithms
+	// like gradient descent.
+	ValuePtr tanH()
 	{
-		auto out = Create(this->data < 0.0 ? 0.0 : this->data, { shared_from_this() }, "ReLU");
+		auto out = Create(std::tanh(this->data), { shared_from_this() }, "TanH");
 
 		out->_backward = [this, out]()
 		{
-			double t = out->data > 0.0 ? 1.0 : 0.0;
-			this->grad = this->grad + out->get_grad() * t;
+			double tanh_out_squared = std::pow(std::tanh(out->data), 2);
+			this->grad = this->grad + out->get_grad() * (1 - tanh_out_squared);
 		};
 
 		return out;
@@ -282,7 +287,7 @@ public:
 			activation = *activation + t;
 
 		}
-		return nonlin ? activation->relu() : activation;
+		return nonlin ? activation->tanH() : activation;
 	}
 
 	// The 'parameters' member function returns a vector containing all the parameters (weights and bias) of the neuron.
