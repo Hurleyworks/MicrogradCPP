@@ -19,7 +19,6 @@ void gradientDescent(const std::vector<ValuePtr>& params, double learningRate)
 {
 	for (auto& p : params)
 	{
-		//LOG(DBUG) << p->get_val();
 		double gradient = p->get_grad();
 
 		p->set_val(p->get_val() -learningRate * gradient);
