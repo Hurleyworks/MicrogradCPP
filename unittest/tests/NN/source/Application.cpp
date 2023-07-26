@@ -15,7 +15,8 @@ using nlohmann::json;
 TEST_CASE ("Layer Class Test")
 {
     // Construct a layer with 3 input neurons and 2 output neurons
-    Layer layer (3, 2);
+    uint32_t id = 0;
+    Layer layer (3, 2, id);
 
     // Test successful Layer creation
     CHECK (layer.parameters().size() != 0);

@@ -105,8 +105,16 @@ public:
 		{
 			throw std::invalid_argument("Division by zero is not allowed");
 		}
-		return *this * other->pow(-1);
+
+		auto out = Create(this->data / other->data, { shared_from_this(), other }, "/");
+		out->_backward = [this, other, out]()
+		{
+			this->grad += 1 / other->data * out->grad;
+			other->grad -= this->data / (other->data * other->data) * out->grad;
+		};
+		return out;
 	}
+
 
 	// Operator overload for multiplication with a double
 	ValuePtr operator* (double val)
@@ -167,7 +175,6 @@ public:
 		}
 	}
 
-	
 	// From ChatGPT
 	// In the backward function, we're using the derivative of tanh(x), which is 1 - tanh²(x).
 	// When backpropagating the gradient, this derivative is multiplied with the gradient of 
@@ -263,18 +270,18 @@ public:
 
 		for (int i = 0; i < inputCount; ++i)
 		{
-			// using generateRandomDouble fixes the intermittent failure problems
-			// because it produces the same random number set on every run
+			// using generateRandomDouble produces the same random number set on every run
 			double weight = generateRandomDouble();
+			//double weight = RandoM::get<double>(-1.0, 1.0);
 			weights.push_back(ExprNode::Create(weight));
 		}
 
-		bias = ExprNode::Create(0.001);
+		bias = ExprNode::Create(0.0);
 	}
 
 	// The function call operator is overloaded to compute the output of the neuron given its inputs.
 	// It computes the weighted sum of the inputs and bias,
-	// and then applies the ReLU activation function if 'nonlin' is true.
+	// and then applies the tanH activation function if 'nonlin' is true.
 	ValuePtr operator() (const std::vector<ValuePtr>& inputs)
 	{
 		assert(inputs.size() == weights.size());

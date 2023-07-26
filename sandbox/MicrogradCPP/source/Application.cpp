@@ -21,7 +21,7 @@ void gradientDescent(const std::vector<ValuePtr>& params, double learningRate)
 	{
 		double gradient = p->get_grad();
 
-		p->set_val(p->get_val() -learningRate * gradient);
+		p->set_val(p->get_val() - learningRate * gradient);
 	}
 }
 class Application : public Jahley::App
@@ -52,32 +52,35 @@ public:
 				{ExprNode::Create(-1)} };
 
 
-			// Train 
+			// "Epoch" is a term used in machine learning to denote one complete pass 
+			// through the entire training dataset. It's used as a measure of the number
+			// of times the learning algorithm has worked through the entire training set.
 			int epochs = 1000;
-			double learningRate = 0.01;
+			double learningRate = 0.05;
 			for (int epoch = 0; epoch < epochs; ++epoch)
 			{
 				LOG(DBUG) << "---------------------Epoch: " << epoch;
 				for (size_t i = 0; i < inputs.size(); ++i)
 				{
 					std::vector<ValuePtr> in = inputs[i];
-					LOG(DBUG) << "Input " << i << " " << in[0]->get_val() << ", " << in[1]->get_val() << ", " << in[2]->get_val();
+					LOG(DBUG) << "Input:" << i << "   " << in[0]->get_val() << ", " << in[1]->get_val() << ", " << in[2]->get_val();
 
-					// Forward propagation
-					std::vector<ValuePtr> prediction = mlp(inputs[i]);
-
-					for (const auto& p : prediction)
-					{
-						LOG(DBUG) << "Prediction " << p->get_val();
-					}
 					std::vector<ValuePtr>& targ = targets[i];
 					for (const auto& t : targ)
 					{
 						LOG(DBUG) << "Target " << t->get_val();
 					}
 
+					// Forward propagation
+					std::vector<ValuePtr> prediction = mlp(inputs[i]);
+					for (const auto& p : prediction)
+					{
+						LOG(DBUG) << "Prediction " << p->get_val();
+					}
+
 					// Calculate loss
 					ValuePtr loss = meanSquardError(targets[i], prediction);
+					LOG(DBUG) << "Loss: " << loss->get_val() << "\n";
 
 					// Reset gradients to 0
 					mlp.zero_grad();
@@ -88,8 +91,6 @@ public:
 					// Update weights
 					gradientDescent(mlp.parameters(), learningRate);
 
-					LOG(DBUG) << "Loss: " << loss->get_val();
-					LOG(DBUG) << " ";
 				}
 			}
 		}
