@@ -32,7 +32,7 @@ public:
 
 	~ExprNode()
 	{
-		LOG(DBUG) << "NODE is destroyed ";
+		//LOG(DBUG) << "NODE is destroyed ";
 	}
 
 	// Operator overload for addition with another ValuePtr
@@ -169,6 +169,7 @@ public:
 
 		// Execute _backward in topological order
 		this->grad = 1.0;
+
 		for (auto it = topo.rbegin(); it != topo.rend(); ++it)
 		{
 			(*it)->_backward();
@@ -191,6 +192,37 @@ public:
 		};
 
 		return out;
+	}
+
+	// Softmax operation
+	// This softmax() function calculates the softmax of the previous nodes _prev 
+	// of the current node.It assumes that the _prev nodes are the outputs of
+	// a layer in a neural network and this current node is responsible for 
+	// softmax operation over those outputs.Please note that this is a very 
+	// simple version of softmax and may need adjustment based on the exact setup of your network.
+	std::vector<ValuePtr> softmax()
+	{
+		// Compute the sum of exponential values of all elements
+		double sum_exp = 0;
+		for (auto& node : _prev)
+		{
+			sum_exp += std::exp(node->data);
+		}
+
+		// Now calculate softmax for each node
+		std::vector<ValuePtr> softmax_values;
+		for (auto& node : _prev)
+		{
+			auto out = Create(std::exp(node->data) / sum_exp, { shared_from_this(), node }, "Softmax");
+			out->_backward = [this, node, out, sum_exp]()
+			{
+				this->grad += (out->get_grad() * (1 - out->get_val())) * out->get_val();
+				node->grad -= this->grad * out->get_val();
+			};
+			softmax_values.push_back(out);
+		}
+
+		return softmax_values;
 	}
 
 	// Getters for data and grad
@@ -249,6 +281,7 @@ public:
 class Neuron : public Module, public HasId
 {
 private:
+
 	std::vector<ValuePtr> weights; // The 'weights' member holds the weights of the neuron's inputs.
 	// Each element in this vector corresponds to the weight of a particular input.
 
@@ -338,7 +371,14 @@ public:
 			out.push_back(n(inputs));
 		}
 		return out;
+
 	}
+
+	int size() const {
+		return neurons.size();
+	}
+
+	std::vector<Neuron>& getNeurons() { return neurons; }
 
 	// The 'parameters' member function returns a vector containing all the parameters (weights and biases)
 	// of the neurons in the layer.
@@ -360,13 +400,17 @@ class MLP : public Module
 {
 private:
 	std::vector<Layer> layers; // The 'layers' member holds the sequence of layers that make up the network.
+	BS::thread_pool pool;
+	bool multiThreaded = true;
 
 public:
 	// The constructor takes the number of input neurons ('inputNeuronCount') and a vector that specifies the number of neurons
 	// in each layer ('neuronsPerLayer'). It initializes the network by creating a sequence of layers,
 	// each with the appropriate number of input and output neurons.
-	MLP(int inputNeuronCount, std::vector<int> neuronsPerLayer)
+	MLP(int inputNeuronCount, std::vector<int> neuronsPerLayer, bool multiThreaded = true)
 	{
+		this->multiThreaded = multiThreaded;
+
 		int sz_in = inputNeuronCount;
 		for (int i = 0; i < neuronsPerLayer.size(); ++i)
 		{
@@ -375,16 +419,47 @@ public:
 		}
 	}
 
-	// The function call operator is overloaded to compute the output of the network given its inputs.
-	// It applies each layer in the network to the output of the previous layer, and returns the final output.
 	std::vector<ValuePtr> operator() (const std::vector<ValuePtr>& inputs)
 	{
-		std::vector<ValuePtr> out = inputs;
-		for (auto& layer : layers)
+		if (multiThreaded)
 		{
-			out = layer(out);
+			std::vector<ValuePtr> layerInput = inputs;
+
+			for (auto& layer : layers)
+			{
+				auto& neurons = layer.getNeurons();
+				std::vector<ValuePtr> layerOutput(neurons.size());
+
+				std::vector<std::future<void>> futures;
+				futures.reserve(neurons.size());
+
+				for (size_t i = 0; i < neurons.size(); ++i)
+				{
+					futures.push_back(pool.submit([&layerInput, &neurons, &layerOutput, i]()
+						{
+							layerOutput[i] = neurons[i](layerInput);
+						}));
+				}
+
+				for (auto& f : futures)
+				{
+					f.get(); // wait for all tasks of this layer to finish
+				}
+
+				layerInput = std::move(layerOutput); // use move assignment to avoid copying
+			}
+
+			return layerInput;
 		}
-		return out;
+		else
+		{
+			std::vector<ValuePtr> out = inputs;
+			for (auto& layer : layers)
+			{
+				out = layer(out);
+			}
+			return out;
+		}
 	}
 
 	// The 'parameters' member function returns a vector containing all the parameters (weights and biases)

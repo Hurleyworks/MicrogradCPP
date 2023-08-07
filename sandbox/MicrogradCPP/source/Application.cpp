@@ -2,6 +2,13 @@
 
 const std::string APP_NAME = "MicrogradCPP";
 
+constexpr uint32_t INPUT_LAYER_NEURONS = 10;
+constexpr uint32_t OUTPUT_LAYER_NEURONS = 1;
+constexpr uint32_t NUMBER_OF_INPUTS = 20;
+constexpr uint32_t HIDDEN_LAYER_NEURONS = 8;
+constexpr uint32_t EPOCHS = 1000;
+constexpr double LEARNING_RATE = 0.025;
+
 // The mean squared error loss function
 ValuePtr meanSquardError(const std::vector<ValuePtr>& target, const std::vector<ValuePtr>& prediction)
 {
@@ -15,15 +22,47 @@ ValuePtr meanSquardError(const std::vector<ValuePtr>& target, const std::vector<
 }
 
 // The stochastic gradient descent update rule
-void gradientDescent(const std::vector<ValuePtr>& params, double learningRate)
+void gradientDescent(const std::vector<ValuePtr>& params)
 {
 	for (auto& p : params)
 	{
 		double gradient = p->get_grad();
 
-		p->set_val(p->get_val() - learningRate * gradient);
+		p->set_val(p->get_val() - LEARNING_RATE * gradient);
 	}
 }
+
+void fillInputs(std::vector<std::vector<ValuePtr>>& inputs)
+{
+	inputs.resize(NUMBER_OF_INPUTS); // Prepare the outer vector to hold NUMBER_OF_INPUTS vectors.
+	for (auto& inner : inputs)
+	{
+		inner.resize(INPUT_LAYER_NEURONS); // Each inner vector will hold INPUT_LAYER_NEURONS ValuePtrs.
+
+		for (auto& val : inner)
+		{
+			val = ExprNode::Create(generateRandomDouble(-4.0, 4.0));
+		}
+	}
+}
+
+void fillTargets(std::vector<std::vector<ValuePtr>>& targets) 
+{
+	targets.resize(NUMBER_OF_INPUTS); // Prepare the outer vector to hold NUMBER_OF_INPUTS vectors.
+
+
+	for (auto& inner : targets)
+	{
+		inner.resize(1); // Each inner vector will hold 1 ValuePtrs.
+
+		for (auto& val : inner)
+		{
+			// The tanh function outputs values in the range -1 to 1. 
+			val = ExprNode::Create(generateRandomDouble(-1.0, 1.0));
+		}
+	}
+}
+
 class Application : public Jahley::App
 {
 public:
@@ -32,32 +71,20 @@ public:
 	{
 		try
 		{
-			// Create an MLP with 2 hidden layers, each with 4 neurons
-			MLP mlp(3, { 4, 4, 1 });
+			// Create a multithreaded MLP with 3 hidden layers
+			bool multiThreaded = true;
+			MLP mlp(INPUT_LAYER_NEURONS, { HIDDEN_LAYER_NEURONS, HIDDEN_LAYER_NEURONS, HIDDEN_LAYER_NEURONS, OUTPUT_LAYER_NEURONS }, multiThreaded);
 
-			std::vector<std::vector<ValuePtr>> inputs = {
-				{ExprNode::Create(2.0), ExprNode::Create(3.0), ExprNode::Create(-1.0)},
-				{ExprNode::Create(3.0), ExprNode::Create(-1.0), ExprNode::Create(0.5)},
-				{ExprNode::Create(0.5), ExprNode::Create(1.0), ExprNode::Create(1.0)},
-				{ExprNode::Create(1.0), ExprNode::Create(-1.0), ExprNode::Create(-1.0)} };
+			std::vector<std::vector<ValuePtr>> inputs;
+			fillInputs(inputs);
 
-			// The tanh function outputs values in the range -1 to 1. 
-			// If you're using tanh as the activation function in the output
-			// layer of your MLP and you have targets outside this range, 
-			// then it's not possible for the MLP to correctly predict those targets.
-			std::vector<std::vector<ValuePtr>> targets = {
-				{ExprNode::Create(-1.0)},
-				{ExprNode::Create(1.0)},
-				{ExprNode::Create(1.0)},
-				{ExprNode::Create(-1)} };
-
+			std::vector<std::vector<ValuePtr>> targets;
+			fillTargets(targets);
 
 			// "Epoch" is a term used in machine learning to denote one complete pass 
 			// through the entire training dataset. It's used as a measure of the number
 			// of times the learning algorithm has worked through the entire training set.
-			int epochs = 1000;
-			double learningRate = 0.05;
-			for (int epoch = 0; epoch < epochs; ++epoch)
+			for (int epoch = 0; epoch < EPOCHS; ++epoch)
 			{
 				LOG(DBUG) << "---------------------Epoch: " << epoch;
 				for (size_t i = 0; i < inputs.size(); ++i)
@@ -89,8 +116,7 @@ public:
 					loss->backward();
 
 					// Update weights
-					gradientDescent(mlp.parameters(), learningRate);
-
+					gradientDescent(mlp.parameters());
 				}
 			}
 		}

@@ -47,6 +47,8 @@ using nlohmann::json;
 
 // some useful tools and defines outside mace namespace
 #include "excludeFromBuild/basics/Util.h"
+#include "excludeFromBuild/thread/BS_thread_pool.h"
+#include "excludeFromBuild/thread/BS_thread_pool_light.h"
 #include "excludeFromBuild/ai/Micrograd.h"
 
 namespace mace
