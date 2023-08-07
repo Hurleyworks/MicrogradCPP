@@ -10,43 +10,6 @@ constexpr uint32_t HIDDEN_LAYER_NEURONS = 8;
 constexpr uint32_t EPOCHS = 1000;
 double LEARNING_RATE = 0.025;
 
-#if 0
-static void BM_ExprNode_Creation(benchmark::State& state) {
-	for (auto _ : state) {
-		auto node = ExprNode::Create(generateRandomDouble());
-	}
-}
-
-static void BM_ExprNode_Addition(benchmark::State& state) {
-	auto node1 = ExprNode::Create(generateRandomDouble());
-	auto node2 = ExprNode::Create(generateRandomDouble());
-	for (auto _ : state) {
-		auto result = *node1 + node2;
-	}
-}
-
-static void BM_Neuron_Creation(benchmark::State& state) {
-	for (auto _ : state) {
-		Neuron n(state.range(0));
-	}
-}
-
-static void BM_Neuron_ComputeOutput(benchmark::State& state) {
-	Neuron n(state.range(0));
-	std::vector<ValuePtr> inputs;
-	for (int i = 0; i < state.range(0); ++i) {
-		inputs.push_back(ExprNode::Create(generateRandomDouble()));
-	}
-	for (auto _ : state) {
-		auto result = n(inputs);
-	}
-}
-// Register the function as a benchmark
-BENCHMARK(BM_ExprNode_Creation);
-BENCHMARK(BM_ExprNode_Addition);
-BENCHMARK(BM_Neuron_Creation)->Arg(10)->Arg(50)->Arg(100)->Arg(200)->Arg(500);
-BENCHMARK(BM_Neuron_ComputeOutput)->Arg(10)->Arg(50)->Arg(100)->Arg(200)->Arg(500);
-#endif
 
 // The mean squared error loss function
 ValuePtr meanSquardError(const std::vector<ValuePtr>& target, const std::vector<ValuePtr>& prediction)
@@ -104,9 +67,9 @@ void fillTargets(std::vector<std::vector<ValuePtr>>& targets)
 static void BM_MLP_MT(benchmark::State& state) {
 	for (auto _ : state) 
 	{
-	
-		// Create an MLP with 3 hidden layers
-		MLP mlp(INPUT_LAYER_NEURONS, { HIDDEN_LAYER_NEURONS, HIDDEN_LAYER_NEURONS, HIDDEN_LAYER_NEURONS, OUTPUT_LAYER_NEURONS }, true);
+		// Create a multitheaded MLP with 3 hidden layers
+		bool multithreaded = true;
+		MLP mlp(INPUT_LAYER_NEURONS, { HIDDEN_LAYER_NEURONS, HIDDEN_LAYER_NEURONS, HIDDEN_LAYER_NEURONS, OUTPUT_LAYER_NEURONS }, multithreaded);
 
 		std::vector<std::vector<ValuePtr>> inputs;
 		fillInputs(inputs);
@@ -141,8 +104,9 @@ static void BM_MLP_MT_2H(benchmark::State& state) {
 	for (auto _ : state)
 	{
 
-		// Create an MLP with 2 hidden layers
-		MLP mlp(INPUT_LAYER_NEURONS, { HIDDEN_LAYER_NEURONS, HIDDEN_LAYER_NEURONS,OUTPUT_LAYER_NEURONS }, true);
+		// Create a multitheaded MLP with 2 hidden layers
+		bool multithreaded = true;
+		MLP mlp(INPUT_LAYER_NEURONS, { HIDDEN_LAYER_NEURONS, HIDDEN_LAYER_NEURONS,OUTPUT_LAYER_NEURONS }, multithreaded);
 
 		std::vector<std::vector<ValuePtr>> inputs;
 		fillInputs(inputs);
